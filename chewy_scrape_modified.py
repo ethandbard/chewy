@@ -55,8 +55,8 @@ def GetLinks(url):
         GetLinks("https://www.chewy.com" + next_page.get('href'))
 
 
-def SaveLinks(links):
-    textFile = open("chewyLinks.txt", 'w')
+def SaveLinks(links, filename):
+    textFile = open(filename, 'w')
 
     for link in links:
         textFile.write(link + '\n')
@@ -101,77 +101,30 @@ def ScrapePages(pages):
 
         print(nutrition[0].get_text().strip().split()[0])
 
-        # if 'Chicken' in ingredients:
-        #     Chicken.append("1")
-        # else:
-        #     Chicken.append("0")
-
-        # if "Pork" in ingredients:
-        #     Pork.append("1")
-        # else:
-        #     Pork.append('0')
-
-        # if 'Beef' in ingredients:
-        #     Beef.append('1')
-        # else:
-        #     Beef.append('0')
-
-        # if 'Rabbit' in ingredients:
-        #     Rabbit.append('1')
-        # else:
-        #     Rabbit.append('0')
-
-        # if 'Salmon' or 'Tuna' or 'fish' in ingredients:
-        #     Fish.append('1')
-        # else:
-        #     Fish.append('0')
-
-        # if 'Lamb' in ingredients:
-        #     Lamb.append('1')
-        # else:
-        #     Lamb.append('0')
-
-        # if 'Egg' in ingredients:
-        #     Egg.append('1')
-        # else:
-        #     Egg.append('0')
-
-        # if 'Corn' in ingredients:
-        #     Corn.append('1')
-        # else:
-        #     Corn.append('0')
-
-        # if 'Soy' in ingredients:
-        #     Soy.append('1')
-        # else:
-        #     Soy.append('0')
-
-        # if 'Wheat' in ingredients:
-        #     Wheat.append('1')
-        # else:
-        #     Wheat.append('0')
-
-        # if 'Cheese' or 'Cream' in ingredients:
-        #     Dairy.append('1')
-        # else:
-        #     Dairy.append('0')
-
-        # if len(nutrition) > 2:
-        # .replace("Contains A Source Of Live (Viable), Naturally Occurring Microorganisms.", "").replace(
-        # ingredients = nutrition[1].get_text()
-        # "Ingredient Statement:", "").replace("New Formulation:", "").replace("New Formula:", "").strip()
-        # else:
-        # .replace("Contains A Source Of Live (Viable), Naturally Occurring Microorganisms.", "").replace(
-        # ingredients = nutrition[0].get_text()
-        #  "Ingredient Statement:", "").strip()
-
-        # print(ingredients)
-        # prod_ingredients.append(ingredients)
-
 
 # populates prod_links from textfile
-LoadLinks("Python Scripts\chewyLinks.txt")
-ScrapePages(prod_links)
+LoadLinks("chewy\chewyLinks.txt")
+
+
+for page in prod_links:
+    try:
+        print(f"Trying: {prod_links[1]}")
+        page = requests.get(prod_links[1].rstrip(),
+                            timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
+        print("success")
+        soup = BeautifulSoup(page.content, 'html.parser')
+        print(soup.find('section', id="INGREDIENTS-section").find('p'))
+        break
+    except:
+        #print("Connection refused by the server..")
+        #print("Let me sleep for 5 seconds")
+        #print("ZZzzzz...")
+        sleep(5)
+        #print("Was a nice sleep, now let me continue...")
+        continue
+
+#ScrapePages(prod_links)
+       
 
 
 # GetLinks("https://www.chewy.com/b/dry-food-294")
