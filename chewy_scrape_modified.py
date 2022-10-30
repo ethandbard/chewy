@@ -4,29 +4,11 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from time import sleep
 from random import randint
+import pprint
+import json
 
-prod_names = []
-prod_made_in = []
-prod_analysis = []
-prod_ingredients = []
 prod_links = []
-
-# Product Attributes
-Grain_Free = []
-Pork = []
-Rabbit = []
-Beef = []
-Chicken = []
-Fish = []
-Lamb = []
-Egg = []
-Corn = []
-Soy = []
-Wheat = []
-Dairy = []
-
-found = 0
-notFound = 0
+prod_dict = {}
 
 
 def GetLinks(url):
@@ -106,54 +88,31 @@ def ScrapePages(pages):
 LoadLinks("chewy\chewyLinks.txt")
 
 
-for page in prod_links:
-    try:
-        print(f"Trying: {prod_links[1]}")
-        page = requests.get(prod_links[1].rstrip(),
-                            timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
-        print("success")
-        soup = BeautifulSoup(page.content, 'html.parser')
-        print(soup.find('section', id="INGREDIENTS-section").find('p'))
+for link in prod_links[0:2]:
+    while True:
+        try:
+            print(f"Trying: {link}")
+            page = requests.get(link.rstrip(),
+                                timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
+            soup = BeautifulSoup(page.content, 'html.parser')
+            prod_name = soup.find("div", {"class": "_2lMe8l0Qayns-EKWOOJfXh"}).find('h1').text
+            print(prod_name)
+            specifications = soup.find('div', {"class": "_3xer4bkNDgAik73jS-7m94"}).find('table').find_all('tr')
+            specifications_dict = {}
+            specifications_dict['name'] = prod_name
+            specifications_dict['Ingredients'] = soup.find('section', id="INGREDIENTS-section").find('p').text 
+            for i in range(0, len(specifications)):
+                specifications_dict[specifications[i].find('th').text] = specifications[i].find('td').text
+            prod_dict[specifications_dict['Item Number']] = specifications_dict
+            print("success")
+        except:
+            print(f"failed. Trying again: {link}")
+            sleep(5)
+            continue
         break
-    except:
-        #print("Connection refused by the server..")
-        #print("Let me sleep for 5 seconds")
-        #print("ZZzzzz...")
-        sleep(5)
-        #print("Was a nice sleep, now let me continue...")
-        continue
 
-#ScrapePages(prod_links)
-       
+prod_json = json.dumps(prod_dict, indent = 4)
+pprint.pprint(prod_dict)
 
-
-# GetLinks("https://www.chewy.com/b/dry-food-294")
-# SaveLinks(prod_links)
-
-# ScrapePages(prod_links[:30])
-
-# ingredient_catalog = {'Names': prod_names[:35],
-# 'Ingredients': prod_ingredients}
-
-# product_data = {
-#     'Product_Name': prod_names[:30],
-#     'Price': "NULL",
-#     'Grain_Free': Grain_Free[:30],
-#     'Chicken': Chicken,
-#     'Beef': Beef,
-#     'Fish': Fish,
-#     'Pork': Pork,
-#     'Rabbit': Rabbit,
-#     'Lamb': Lamb,
-#     'Egg': Egg,
-#     'Corn': Corn,
-#     'Soy': Soy,
-#     'Wheat': Wheat,
-#     'Dairy': Dairy}
-
-# product_data_df = pd.DataFrame(product_data)
-# product_data_df.to_csv('Product Attributes.csv')
-
-# ingredients_catalog_df = pd.DataFrame(ingredient_catalog)
-# print(ingredients_catalog_df)
-# ingredients_catalog_df.to_csv('chewy scrape.csv')
+with open("chewy\sample.json", "w") as outfile:
+    outfile.write(prod_json)
