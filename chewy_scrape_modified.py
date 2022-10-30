@@ -48,68 +48,40 @@ def SaveLinks(links, filename):
 
 def LoadLinks(file):
     textFile = open(file, "r")
-
     for line in textFile.readlines():
         prod_links.append(line)
-
     textFile.close()
 
 
 def ScrapePages(pages):
-    counter = 1
-    for page in pages:
-        print(f"Scraping page ({counter}/{len(prod_links)})")
-        counter += 1
-        url = page
-        while url == page:
+    for link in prod_links[0:2]:
+        while True:
             try:
-                print(page)
-                bowl = requests.get(page.rstrip(),
+                print(f"Trying: {link}")
+                page = requests.get(link.rstrip(),
                                     timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
-                break
+                soup = BeautifulSoup(page.content, 'html.parser')
+                prod_name = soup.find("div", {"class": "_2lMe8l0Qayns-EKWOOJfXh"}).find('h1').text
+                print(prod_name)
+                specifications = soup.find('div', {"class": "_3xer4bkNDgAik73jS-7m94"}).find('table').find_all('tr')
+                specifications_dict = {}
+                specifications_dict['name'] = prod_name
+                specifications_dict['Ingredients'] = soup.find('section', id="INGREDIENTS-section").find('p').text 
+                for i in range(0, len(specifications)):
+                    specifications_dict[specifications[i].find('th').text] = specifications[i].find('td').text
+                prod_dict[specifications_dict['Item Number']] = specifications_dict
+                print("success")
             except:
-                print("Connection refused by the server..")
-                print("Let me sleep for 5 seconds")
-                print("ZZzzzz...")
+                print(f"failed. Trying again: {link}")
                 sleep(5)
-                print("Was a nice sleep, now let me continue...")
                 continue
-
-        soup = BeautifulSoup(bowl.content, 'html.parser')
-        soup_2 = soup.find('article', id="Nutritional-Info")
-        nutrition_container = soup_2.find(
-            'section', class_="cw-tabs__content--left")
-        nutrition = nutrition_container.find_all('p')
-
-        print(nutrition[0].get_text().strip().split()[0])
-
-
+            break
+        
+        
 # populates prod_links from textfile
 LoadLinks("chewy\chewyLinks.txt")
 
-
-for link in prod_links[0:2]:
-    while True:
-        try:
-            print(f"Trying: {link}")
-            page = requests.get(link.rstrip(),
-                                timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
-            soup = BeautifulSoup(page.content, 'html.parser')
-            prod_name = soup.find("div", {"class": "_2lMe8l0Qayns-EKWOOJfXh"}).find('h1').text
-            print(prod_name)
-            specifications = soup.find('div', {"class": "_3xer4bkNDgAik73jS-7m94"}).find('table').find_all('tr')
-            specifications_dict = {}
-            specifications_dict['name'] = prod_name
-            specifications_dict['Ingredients'] = soup.find('section', id="INGREDIENTS-section").find('p').text 
-            for i in range(0, len(specifications)):
-                specifications_dict[specifications[i].find('th').text] = specifications[i].find('td').text
-            prod_dict[specifications_dict['Item Number']] = specifications_dict
-            print("success")
-        except:
-            print(f"failed. Trying again: {link}")
-            sleep(5)
-            continue
-        break
+ScrapePages(prod_links)
 
 prod_json = json.dumps(prod_dict, indent = 4)
 pprint.pprint(prod_dict)
