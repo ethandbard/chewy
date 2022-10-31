@@ -9,49 +9,44 @@ import json
 prod_links = []
 prod_dict = {}
 
-def GetLinks(url):
+def get_links(url, links, count = 0, stop = 1):
     while True:
-        try:
-            print(f"Trying {url}")
-            page = get(url, timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
-            soup = BeautifulSoup(page.content, 'html.parser')
-            results = soup.find('div', class_="results-content")
-            print(f"Success")
-        except:
-            print(f"Failed. Trying again: {url}")
-            continue
-        break
-    
-        print(f"")
-        paginator = results.find(
-            'section', class_="cw-pagination results-pagination")
-        articles = results.find_all(
-            'article', class_="product-holder js-tracked-product cw-card cw-card-hover")
+            try:
+                print(f"Trying {url}")
+                page = get(url, timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
+                soup = BeautifulSoup(page.content, 'html.parser')
+                print(f"Success")
+            except:
+                print(f"Failed. Trying again: {url}")
+                continue
+            break
+
+    result_count = soup.find('p', {"class": "results-count kib-typography-paragraph1 kib-breakpoint-hide@xs kib-breakpoint-hide@sm ProductListingGrid_resultsCount__3dRCX"}).text.split(" ")
+    card_count_start= int(result_count[0])
+    card_count_end = int(result_count[2]) 
+    prod_count = int(result_count[4])
+
+    cards = soup.find_all('div', {"class": "kib-product-card ProductListing_kibProductCard__3KgKt js-tracked-product"})
+    print(f"Product cards on this page: {card_count_start} - {card_count_end}")
+    i = card_count_start
+    for card in cards[0:card_count_end-card_count_start+1]:
+        link = card.find('a', {"class": "kib-product-title"}).get('href')
+        links.append(link)
+        print(f"{i}: {link}")
+        i += 1
         
-    while True:
-        try:
-            for article in articles:
-                data_name = article.get('data-name')
-                prod_names.append(data_name)
-                prod_holder = article.find('a')
-                link = prod_holder.get('href')
-                prod_links.append(link)
-                # price = prod_holder.find_all('p', class_="price")
-                if 'Grain-Free' in data_name:
-                    Grain_Free.append('1')
-                else:
-                    Grain_Free.append('0')
-            if paginator.find('a', class_="cw-pagination__next") is not None:
-                next_page = paginator.find('a', class_="cw-pagination__next")
-                print(f"Got next page: {next_page.get('href')}")
-                GetLinks("https://www.chewy.com" + next_page.get('href'))
-        except:
-            continue
-        break
+    if i < prod_count:
+        next_link = "https://www.chewy.com" + soup.find('a', {"class":"kib-pagination-new-item kib-pagination-new-item--interactive kib-pagination-new-item--next"}).get('href')
+        print(f"Next page: {next_link}")
+        get_links(next_link, links)
+    else:
+        print(f"No more pages.")
+        save_links(links)
+        print("Links saved at: {}")
 
 
-def SaveLinks(links, filename):
-    textFile = open(filename, 'w')
+def save_links(links):
+    textFile = open("chewy\\chewy_links_test.txt", 'w')
 
     for link in links:
         textFile.write(link + '\n')
@@ -59,14 +54,14 @@ def SaveLinks(links, filename):
     textFile.close()
 
 
-def LoadLinks(file):
+def load_links(file):
     textFile = open(file, "r")
     for line in textFile.readlines():
         prod_links.append(line)
     textFile.close()
 
 
-def ScrapePages(links):
+def scrape_pages(links):
     counter = 1
     for link in links:
         while True:
@@ -113,12 +108,12 @@ def ScrapePages(links):
             break
         
  
-def SaveJson(json, filename):
+def save_json(json, filename):
     with open(filename, "w") as outfile:
         outfile.write(json)
         
         
-def LoadJson(filename):
+def load_json(filename):
     f = open(filename)
     json_data = json.load(f)
     f.close()
