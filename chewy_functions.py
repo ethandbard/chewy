@@ -1,6 +1,5 @@
 from requests import get
 import requests
-import pandas as pd
 from bs4 import BeautifulSoup
 from time import sleep
 from random import randint
@@ -78,8 +77,15 @@ def ScrapePages(links):
                 soup = BeautifulSoup(page.content, 'html.parser')
                 prod_name = soup.find("div", {"class": "_2lMe8l0Qayns-EKWOOJfXh"}).find('h1').text
                 print(prod_name)
-                specifications = soup.find('div', {"class": "_3xer4bkNDgAik73jS-7m94"}).find('table').find_all('tr')
+                
+                #create dict
                 specifications_dict = {}
+                
+                #get data
+                specifications = soup.find('div', {"class": "_3xer4bkNDgAik73jS-7m94"}).find('table').find_all('tr')
+                for i in range(0, len(specifications)):
+                    specifications_dict[specifications[i].find('th').text] = specifications[i].find('td').text
+                prod_dict[specifications_dict['Item Number']] = specifications_dict
                 specifications_dict['name'] = prod_name
                 
                 #check for ingredients
@@ -98,10 +104,6 @@ def ScrapePages(links):
                     specifications_dict['Rating'] = float(rating)
                     specifications_dict['Review Count'] = int(review_count)
                 
-                #add specifications to dict
-                for i in range(0, len(specifications)):
-                    specifications_dict[specifications[i].find('th').text] = specifications[i].find('td').text
-                prod_dict[specifications_dict['Item Number']] = specifications_dict
                 print(f"Success ({counter} / {len(prod_links)})")
                 counter += 1
             except:
@@ -111,8 +113,17 @@ def ScrapePages(links):
             break
         
  
-def WriteJson(filename):
+def SaveJson(json, filename):
     with open(filename, "w") as outfile:
-        outfile.write(prod_json)
+        outfile.write(json)
+        
+        
+def LoadJson(filename):
+    f = open(filename)
+    json_data = json.load(f)
+    f.close()
+    return(json_data)
+
+
         
 
