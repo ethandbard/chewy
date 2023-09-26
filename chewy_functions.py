@@ -69,6 +69,7 @@ def scrape_pages(links):
                 print(f"Trying: {link}")
                 page = requests.get(link.rstrip(),
                                     timeout=5, headers={'User-Agent': 'SomeAgent 1.0'})
+                print('got page')
                 soup = BeautifulSoup(page.content, 'html.parser')
                 prod_name = soup.find("div", {"class": "_2lMe8l0Qayns-EKWOOJfXh"}).find('h1').text
                 print(prod_name)
